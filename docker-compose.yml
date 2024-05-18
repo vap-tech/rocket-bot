@@ -1,0 +1,44 @@
+version: '3'
+services:
+
+  redis:
+    image: redis
+
+  api:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    tty: true
+    command: sh -c "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - redis
+
+  celery:
+    build:
+      context: .
+    tty: true
+    command: celery -A config worker -l INFO
+    depends_on:
+      - redis
+      - api
+
+  celery-beat:
+    build:
+      context: .
+    tty: true
+    command: celery -A config beat -l INFO -S django
+    depends_on:
+      - redis
+      - api
+
+  flower:
+    build:
+      context: .
+    container_name: flower_app
+    command: celery -A config flower -l INFO
+    depends_on:
+      - redis
+      - celery
+    ports:
+      - "8888:5555"
