@@ -8,6 +8,8 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.10"
 Django = "^5.0.6"
+celery = "^5.4.0"
+django-celery-beat = "^2.6.0"
 
 [tool.poetry.dev-dependencies]
 
