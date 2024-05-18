@@ -2,7 +2,7 @@ import urllib
 from rocketchat_API.rocketchat import RocketChat
 from celery import shared_task
 
-from classes import MessageBuilder
+from sender.classes import MessageBuilder
 from sender.models import BotSetting
 
 
