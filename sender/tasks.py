@@ -30,7 +30,7 @@ def send_message():
     message = f"""{data[0]};
     {data[1]};"""
 
-    # rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
+    rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
 
     print(message, '\n')
     print('в rocket отправлено')
