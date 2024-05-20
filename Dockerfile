@@ -7,8 +7,6 @@ COPY . /app
 
 EXPOSE 8000
 
-RUN apk update && apk add musl-dev postgresql-dev
-
 RUN pip install --upgrade pip
 RUN pip install poetry
 RUN poetry config virtualenvs.create false

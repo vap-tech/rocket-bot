@@ -3,6 +3,8 @@ services:
 
   redis:
     image: redis
+    environment:
+      - TZ=Europe/Moscow
 
   api:
     build:
@@ -10,7 +12,11 @@ services:
     ports:
       - "8000:8000"
     tty: true
+    environment:
+      - TZ=Europe/Moscow
     command: sh -c "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./db:/app/db
     depends_on:
       - redis
 
@@ -18,27 +24,34 @@ services:
     build:
       context: .
     tty: true
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - ./db:/app/db
     command: celery -A config worker -l INFO
     depends_on:
-      - redis
       - api
 
   celery-beat:
     build:
       context: .
     tty: true
-    command: celery -A config beat -l INFO -S django
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - ./db:/app/db
+    command: celery -A config beat -l INFO
     depends_on:
-      - redis
-      - api
+      - celery
 
   flower:
     build:
       context: .
     container_name: flower_app
     command: celery -A config flower -l INFO
+    volumes:
+      - ./db:/app/db
     depends_on:
-      - redis
-      - celery
+      - celery-beat
     ports:
       - "8888:5555"
