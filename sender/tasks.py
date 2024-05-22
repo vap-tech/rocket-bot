@@ -1,4 +1,8 @@
-import urllib
+from time import sleep
+
+import requests
+from requests import Timeout, ConnectionError
+
 from rocketchat_API.rocketchat import RocketChat
 from celery import shared_task
 
@@ -14,23 +18,43 @@ def send_message():
 
     dst = 'data.xlsx'
 
-    urllib.request.urlretrieve(bot_setting.file_url, dst)
+    # Загружатор
+    count = 0
+    while count < 5:
+        try:
+            r = requests.get(bot_setting.file_url, timeout=5)
+            if r.status_code == 200:
+                with open(dst, 'wb') as f:
+                    f.write(r.content)
+                break
+            else:
+                print(f'Ошибка, ответ сервера: {r.status_code}')
+        except Timeout:
+            print('Ошибка таймаута')
+        except ConnectionError:
+            print('Ошибка соединения')
+        except Exception as e:
+            print(f'Не опознанная ошибка: {e}')
+        print(f'Попытка: {count + 2}')
+        count += 1
+        sleep(1)
 
+    # Экземпляр создателя сообщений
     ms = MessageBuilder(dst,
                         bot_setting.str_number_for_day,
                         bot_setting.green,
                         bot_setting.red)
 
-    rocket = RocketChat(auth_token=bot_setting.rocket_token,
-                        user_id=bot_setting.rocket_user_id,
-                        server_url=bot_setting.rocket_url)
-
+    # Кортеж из 2 сообщений
     data = ms.build()
 
+    # Форматируем
     message = f"""{data[0]};
     {data[1]};"""
 
-    rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
-
-    print(message, '\n')
-    print('в rocket отправлено')
+    # Экземпляр API rocket'a
+    with RocketChat(auth_token=bot_setting.rocket_token,
+                    user_id=bot_setting.rocket_user_id,
+                    server_url=bot_setting.rocket_url) as rocket:
+        # Отправляем
+        rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
