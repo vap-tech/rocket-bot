@@ -53,8 +53,8 @@ def send_message():
     {data[1]};"""
 
     # Экземпляр API rocket'a
-    with RocketChat(auth_token=bot_setting.rocket_token,
-                    user_id=bot_setting.rocket_user_id,
-                    server_url=bot_setting.rocket_url) as rocket:
-        # Отправляем
-        rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
+    rocket = RocketChat(auth_token=bot_setting.rocket_token,
+                        user_id=bot_setting.rocket_user_id,
+                        server_url=bot_setting.rocket_url)
+    # Отправляем
+    rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
