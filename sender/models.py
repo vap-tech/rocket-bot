@@ -17,3 +17,15 @@ class BotSetting(models.Model):
     class Meta:
         verbose_name = 'Настройки бота'
         verbose_name_plural = 'Настройки бота'
+
+
+class NicOnSurname(models.Model):
+    surname = models.CharField(max_length=100, verbose_name='Фамилия', null=True)
+    nic = models.CharField(max_length=100, verbose_name='Никнейм', null=True)
+
+    def __str__(self):
+        return f'{self.surname}, {self.nic}'
+
+    class Meta:
+        verbose_name = 'Никнейм'
+        verbose_name_plural = 'Никнеймы'

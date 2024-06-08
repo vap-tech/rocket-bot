@@ -1,6 +1,8 @@
 from openpyxl import load_workbook
 from datetime import datetime
 
+from sender.models import NicOnSurname
+
 
 class MessageBuilder:
 
@@ -31,6 +33,12 @@ class MessageBuilder:
         if chell_number:
             employer = 'B' + str(chell_number)
             employer = str(self.ws[employer].value).split()
+
+            # Если ник есть в таблице, используем его
+            nic = NicOnSurname.objects.filter(surname__istartswith=employer[0]).first()
+            if nic:
+                return f'{nic}, сегодня ты дежурный по '
+
             return f'{" ".join(employer[:2])}, сегодня ты дежурный по '
 
     def build(self):
