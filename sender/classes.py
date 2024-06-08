@@ -37,7 +37,7 @@ class MessageBuilder:
             # Если ник есть в таблице, используем его
             nic = NicOnSurname.objects.filter(surname__istartswith=employer[0]).first()
             if nic:
-                return f'{nic}, сегодня ты дежурный по '
+                return f'{nic.nic}, сегодня ты дежурный по '
 
             return f'{" ".join(employer[:2])}, сегодня ты дежурный по '
 
