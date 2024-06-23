@@ -6,7 +6,7 @@ from requests import Timeout, ConnectionError
 from rocketchat_API.rocketchat import RocketChat
 from celery import shared_task
 
-from sender.classes import MessageBuilder
+from sender.classes import DutyMessage, HolidayMessage
 from sender.models import BotSetting
 
 
@@ -40,17 +40,28 @@ def send_message():
         sleep(1)
 
     # Экземпляр создателя сообщений
-    ms = MessageBuilder(dst,
-                        bot_setting.str_number_for_day,
-                        bot_setting.green,
-                        bot_setting.red)
+    ms = DutyMessage(dst,
+                     bot_setting.str_number_for_day,
+                     bot_setting.green,
+                     bot_setting.red)
+
+    ms2 = HolidayMessage(dst,
+                         bot_setting.str_number_for_day,
+                         22,
+                         'FF00B0F0')
 
     # Кортеж из 2 сообщений
     data = ms.build()
+    data2 = ms2.build()
 
     # Форматируем
     message = f"""{data[0]};
     {data[1]};"""
+
+    if data2:
+        message += """
+        """
+        message += data2
 
     # Экземпляр API rocket'a
     rocket = RocketChat(auth_token=bot_setting.rocket_token,

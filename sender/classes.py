@@ -1,89 +1,182 @@
 from openpyxl import load_workbook
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sender.models import NicOnSurname
 
 
-class MessageBuilder:
-
-    def __init__(self, dst, str_number_data, green, red):
+class BaseMessage:
+    def __init__(self, dst, data_row, target_date: datetime):
         """
-        Собирает сообщение по данным из файла
         :param dst: имя файла
-        :param str_number_data: номер строки с числами месяца
+        :param data_row: строка, в которой ищем число
+        """
+
+        self.wb = load_workbook(dst)
+        self.data_row = data_row
+
+        self.target_date = target_date
+
+        # ищем в книге имя листа, в котором содержится текущий месяц
+        month = self.get_name_month(self.target_date.month)
+        sheet_name = self.get_sheet_name(month, self.wb.sheetnames)
+        self.ws = self.wb[sheet_name]
+
+    @staticmethod
+    def get_name_month(month) -> str | bool:
+
+        month_list = [
+            'ноль',
+            'январь', 'февраль', 'март',
+            'апрель', 'май', 'июнь',
+            'июль', 'август', 'сентябрь',
+            'октябрь', 'ноябрь', 'декабрь']
+
+        if 0 < month <= 12:
+            return month_list[month]
+
+        return False
+
+    @staticmethod
+    def get_sheet_name(keyword: str, sheets_names: list) -> str | bool:
+
+        for name in sheets_names:
+            if keyword in name.lower():
+                return name
+
+        return False
+
+    @staticmethod
+    def get_column_letter_by_day(row, day) -> str | bool:
+
+        for cell in row:
+            if str(day) in str(cell.value):
+                return cell.column_letter
+
+        return False
+
+
+class DutyMessage(BaseMessage):
+    """
+    Формирует сообщение для дежурных по чатам
+    """
+
+    def __init__(self, dst, data_row, green, red):
+        """
         :param green: rgb для зеленого цвета
         :param red: rgb для красного
         """
-        # инициализируем объект книги из файла в dst
-        wb = load_workbook(dst)
-        # ищем в книге имя листа, в котором содержится текущий месяц
-        sheet_name = self.get_sheet_name(self.get_current_name_month(), wb.sheetnames)
-        self.ws = wb[sheet_name]
-        self.str_number_data = str_number_data
+        super().__init__(dst, data_row, datetime.now())
+
         # цвета в rgb для поиска
         self.green = green
         self.red = red
 
-    def get_one_message(self, color):
-        ws_row = self.ws[self.str_number_data]
-        # получаем букву столбца по сегодняшнему дню
-        column_letter = self.get_cell_column_letter_by_day(ws_row)
+    def get_one_message(self, color) -> str | bool:
+
+        row = self.ws[self.data_row]
+
+        # получаем букву столбца по дню
+        column_letter = self.get_column_letter_by_day(row, self.target_date.day)
+
         # получаем номер ячейки по цвету текста
         chell_number = self.get_cell_row_by_font_color(color, self.ws[column_letter])
-        if chell_number:
-            employer = 'B' + str(chell_number)
-            employer = str(self.ws[employer].value).split()
 
-            # Если ник есть в таблице, используем его
-            nic = NicOnSurname.objects.filter(surname__istartswith=employer[0]).first()
-            if nic:
-                return f'{nic.nic}, сегодня ты дежурный по '
+        if not chell_number:
+            return False
 
-            return f'{" ".join(employer[:2])}, сегодня ты дежурный по '
+        employer = 'B' + str(chell_number)
+        employer = str(self.ws[employer].value).split()
+
+        # Если ник есть в таблице, используем его
+        nic = NicOnSurname.objects.filter(surname__istartswith=employer[0]).first()
+        if nic:
+            return f'{nic.nic}'
+
+        return f'{" ".join(employer[:2])}'
 
     def build(self):
 
         green_message = self.get_one_message(self.green)
+
         if green_message:
-            green_message += '#ncc-call-tech'
+            green_message += ', сегодня ты дежурный по #ncc-call-tech'
         else:
             green_message = 'по #ncc-call-tech сегодня дежурных нет'
 
         red_message = self.get_one_message(self.red)
+
         if red_message:
-            red_message += '#DomainsDuty'
+            red_message += ', сегодня ты дежурный по #DomainsDuty'
         else:
             red_message = 'по #DomainsDuty сегодня дежурных нет'
 
         return green_message, red_message
 
     @staticmethod
-    def get_sheet_name(keyword: str, sheets_names: list) -> str:
-        for name in sheets_names:
-            if keyword in name.lower():
-                return name
-        return 'нет такого листа'
-
-    @staticmethod
-    def get_cell_row_by_font_color(color: str, ws_col) -> int:
+    def get_cell_row_by_font_color(color: str, ws_col) -> int | bool:
         for cell in ws_col:
             if cell.font.color.rgb == color:
                 return cell.row
+        return False
+
+
+class HolidayMessage(BaseMessage):
+
+    def __init__(self, dst, data_row, interval, blue):
+        """
+        :param blue: цвет ячейки неоформленного отпуска
+        """
+        # ВАЖНО!! поправить формирование даты ниже
+        target_date = datetime.now() + timedelta(days=interval)
+        super().__init__(dst, data_row, target_date)
+
+        self.blue = blue
+
+    def get_employers(self, color: str) -> list[str] | bool:
+
+        row = self.ws[self.data_row]
+
+        # получаем букву столбца по дню
+        column_letter = self.get_column_letter_by_day(row, self.target_date.day)
+
+        # получаем номера ячеек по цвету фона
+        chell_numbers = self.get_cell_row_by_color(color, self.ws[column_letter])
+
+        if not chell_numbers:
+            return False
+
+        employers = []
+
+        for chell_number in chell_numbers:
+
+            employer = 'B' + str(chell_number)
+            employer = str(self.ws[employer].value).split()
+
+            # Если ник есть в таблице, используем его
+            nic = NicOnSurname.objects.filter(surname__istartswith=employer[0]).first()
+            if nic:
+                employers.append(str(nic.nic))
+                continue
+
+            employers.append(" ".join(employer[:2]))
+
+        return employers
+
+    def build(self) -> str | None:
+        employers = self.get_employers(self.blue)
+        if employers:
+            message = ', '.join(employers)
+            message += ' - похоже пора отправить заявление на отпуск'
+            message += ', вот инструкция как это сделать <a href=https://test.ru>link</a>'
+            return message
+        return None
 
     @staticmethod
-    def get_cell_column_letter_by_day(row) -> str:
-        day = datetime.now().day
-        for cell in row:
-            if str(day) in str(cell.value):
-                return cell.column_letter
-        return 'столбец не найден'
+    def get_cell_row_by_color(color: str, ws_col) -> list | list[int]:
+        cell_rows = []
 
-    @staticmethod
-    def get_current_name_month() -> str:
-        month_list = [
-            'январь', 'февраль', 'март',
-            'апрель', 'май', 'июнь',
-            'июль', 'август', 'сентябрь',
-            'октябрь', 'ноябрь', 'декабрь']
+        for cell in ws_col:
+            if cell.fill.fgColor.rgb == color:
+                cell_rows.append(cell.row)
 
-        return month_list[datetime.now().month - 1]
+        return cell_rows
