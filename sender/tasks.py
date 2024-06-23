@@ -60,6 +60,7 @@ def send_message():
 
     if data2:
         message += """
+        тестируемый функционал:
         """
         message += data2
 
