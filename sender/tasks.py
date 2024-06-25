@@ -47,7 +47,7 @@ def send_message():
 
     ms2 = HolidayMessage(dst,
                          bot_setting.str_number_for_day,
-                         22,
+                         14,
                          'FF00B0F0')
 
     # Кортеж из 2 сообщений
