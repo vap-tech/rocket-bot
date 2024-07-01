@@ -167,7 +167,7 @@ class HolidayMessage(BaseMessage):
         if employers:
             message = ', '.join(employers)
             message += ' - похоже пора отправить заявление на отпуск'
-            message += ', вот инструкция как это сделать <a href=https://test.ru>link</a>'
+            message += ', вот инструкция как это сделать https://confluence.runity.ru/x/crJtBQ'
             return message
         return None
 

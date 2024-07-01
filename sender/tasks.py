@@ -1,4 +1,5 @@
 from time import sleep
+from datetime import datetime as dt
 
 import requests
 from requests import Timeout, ConnectionError
@@ -39,7 +40,7 @@ def send_message():
         count += 1
         sleep(1)
 
-    # Экземпляр создателя сообщений
+    # Экземпляры создателей сообщений
     ms = DutyMessage(dst,
                      bot_setting.str_number_for_day,
                      bot_setting.green,
@@ -47,8 +48,13 @@ def send_message():
 
     ms2 = HolidayMessage(dst,
                          bot_setting.str_number_for_day,
-                         14,
-                         'FF00B0F0')
+                         bot_setting.interval,
+                         bot_setting.blue)
+
+    # Экземпляр API rocket'a
+    rocket = RocketChat(auth_token=bot_setting.rocket_token,
+                        user_id=bot_setting.rocket_user_id,
+                        server_url=bot_setting.rocket_url)
 
     # Кортеж из 2 сообщений
     data = ms.build()
@@ -58,15 +64,14 @@ def send_message():
     message = f"""{data[0]};
     {data[1]};"""
 
-    if data2:
-        message += """
+    # Отправляем
+    rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
+
+    sleep(10)
+
+    if data2 and dt.now().day == 1:
+        message = """
         тестируемый функционал:
         """
         message += data2
-
-    # Экземпляр API rocket'a
-    rocket = RocketChat(auth_token=bot_setting.rocket_token,
-                        user_id=bot_setting.rocket_user_id,
-                        server_url=bot_setting.rocket_url)
-    # Отправляем
-    rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
+        rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
