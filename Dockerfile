@@ -12,4 +12,3 @@ RUN pip install poetry
 RUN poetry config virtualenvs.create false
 RUN poetry lock --no-update
 RUN poetry install
-RUN /app/manage.py migrate
