@@ -116,7 +116,8 @@ class DutyMessage(BaseMessage):
     def get_cell_row_by_font_color(color: str, ws_col) -> int | bool:
         for cell in ws_col:
             if cell.font.color.rgb == color:
-                return cell.row
+                if cell.value:
+                    return cell.row
         return False
 
 
