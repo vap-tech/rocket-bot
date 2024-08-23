@@ -127,7 +127,7 @@ class HolidayMessage(BaseMessage):
         """
         :param blue: цвет ячейки неоформленного отпуска
         """
-        # ВАЖНО!! поправить формирование даты ниже
+
         target_date = datetime.now() + timedelta(days=interval)
         super().__init__(dst, data_row, target_date)
 
@@ -167,7 +167,7 @@ class HolidayMessage(BaseMessage):
         employers = self.get_employers(self.blue)
         if employers:
             message = ', '.join(employers)
-            message += ' - похоже пора отправить заявление на отпуск'
+            message += ' - не отправлено заявление на отпуск'
             message += ', вот инструкция как это сделать https://confluence.runity.ru/x/crJtBQ'
             return message
         return None

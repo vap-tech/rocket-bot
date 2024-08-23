@@ -31,7 +31,7 @@ def send_message():
             else:
                 print(f'Ошибка, ответ сервера: {r.status_code}')
         except Timeout:
-            print('Ошибка таймаута')
+            print('Ошибка по таймауту')
         except ConnectionError:
             print('Ошибка соединения')
         except Exception as e:
@@ -60,18 +60,15 @@ def send_message():
     data = ms.build()
     data2 = ms2.build()
 
-    # Форматируем
+    # Форматируем каждый ник с новой строки
     message = f"""{data[0]};
     {data[1]};"""
 
-    # Отправляем
+    # Отправляем дежурантов
     rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
 
     sleep(10)
 
-    if data2 and dt.now().day == 1:
-        message = """
-        тестируемый функционал:
-        """
-        message += data2
-        rocket.chat_post_message(message, channel=bot_setting.rocket_channel)
+    # Отправляем отпускников если они есть и если понедельник
+    if data2 and dt.now().weekday() == 0:
+        rocket.chat_post_message(data2, channel=bot_setting.rocket_channel)
