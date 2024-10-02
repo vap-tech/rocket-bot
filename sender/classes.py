@@ -71,7 +71,7 @@ class DutyMessage(BaseMessage):
         self.green = green
         self.red = red
 
-    def get_one_message(self, color) -> str | bool:
+    def get_one_message(self, color: list) -> str | None:
 
         row = self.ws[self.data_row]
 
@@ -82,7 +82,7 @@ class DutyMessage(BaseMessage):
         chell_number = self.get_cell_row_by_font_color(color, self.ws[column_letter])
 
         if not chell_number:
-            return False
+            return None
 
         employer = 'B' + str(chell_number)
         employer = str(self.ws[employer].value).split()
@@ -96,14 +96,15 @@ class DutyMessage(BaseMessage):
 
     def build(self):
 
-        green_message = self.get_one_message(self.green)
+        green_message = self.get_one_message([self.green])
 
         if green_message:
             green_message += ', сегодня ты дежурный по #ncc-call-tech'
         else:
             green_message = 'по #ncc-call-tech сегодня дежурных нет'
 
-        red_message = self.get_one_message(self.red)
+        # TODO: нормально обработать цвета, пока костыль
+        red_message = self.get_one_message([self.red, 2])
 
         if red_message:
             red_message += ', сегодня ты дежурный по #DomainsDuty'
@@ -113,12 +114,12 @@ class DutyMessage(BaseMessage):
         return green_message, red_message
 
     @staticmethod
-    def get_cell_row_by_font_color(color: str, ws_col) -> int | bool:
+    def get_cell_row_by_font_color(color: list, ws_col) -> int | None:
         for cell in ws_col:
-            if cell.font.color.rgb == color:
+            if cell.font.color.value in color:
                 if cell.value:
                     return cell.row
-        return False
+        return None
 
 
 class HolidayMessage(BaseMessage):
