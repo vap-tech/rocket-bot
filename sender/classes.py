@@ -116,9 +116,10 @@ class DutyMessage(BaseMessage):
     @staticmethod
     def get_cell_row_by_font_color(color: list, ws_col) -> int | None:
         for cell in ws_col:
-            if cell.font.color.value in color:
-                if cell.value:
-                    return cell.row
+            if cell.font.color:
+                if cell.font.color.value in color:
+                    if cell.value:
+                        return cell.row
         return None
 
 
