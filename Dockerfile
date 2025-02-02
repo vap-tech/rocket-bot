@@ -10,5 +10,4 @@ EXPOSE 8000
 RUN pip install --upgrade pip
 RUN pip install poetry
 RUN poetry config virtualenvs.create false
-RUN poetry lock --no-update
 RUN poetry install
