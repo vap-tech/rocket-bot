@@ -8,6 +8,7 @@ class BotSetting(models.Model):
     blue = models.CharField(max_length=400, verbose_name="Синий в RGB", null=True)
     interval = models.IntegerField(verbose_name="Интервал для отпуска", null=True)
     str_number_for_day = models.IntegerField(verbose_name='Номер строки с числом', null=True)
+    col_number_for_nic = models.CharField(verbose_name='Буква столбца с ФИО(регистр не важен)', max_length=2, null=True)
     rocket_token = models.CharField(max_length=400, verbose_name='Rocket.chat Token', null=True)
     rocket_user_id = models.CharField(max_length=100, verbose_name='Rocket.chat User ID', null=True)
     rocket_url = models.URLField(verbose_name='Rocket.chat url', null=True)

@@ -1,7 +1,7 @@
 from openpyxl import load_workbook
 from datetime import datetime, timedelta
 
-from sender.models import NicOnSurname
+from sender.models import NicOnSurname, BotSetting
 
 
 class BaseMessage:
@@ -20,6 +20,9 @@ class BaseMessage:
         month = self.get_name_month(self.target_date.month)
         sheet_name = self.get_sheet_name(month, self.wb.sheetnames)
         self.ws = self.wb[sheet_name]
+
+        # буква столбца с ФИО
+        self.employer_col = BotSetting.objects.get(pk=1).col_number_for_nic.upper()
 
     @staticmethod
     def get_name_month(month) -> str | bool:
@@ -84,7 +87,10 @@ class DutyMessage(BaseMessage):
         if not chell_number:
             return None
 
-        employer = 'B' + str(chell_number)
+        if not self.employer_col:
+            employer = 'B' + str(chell_number)
+        else:
+            employer = self.employer_col + str(chell_number)
         employer = str(self.ws[employer].value).split()
 
         # Если ник есть в таблице, используем его
@@ -152,7 +158,11 @@ class HolidayMessage(BaseMessage):
 
         for chell_number in chell_numbers:
 
-            employer = 'B' + str(chell_number)
+            if not self.employer_col:
+                employer = 'B' + str(chell_number)
+            else:
+                employer = self.employer_col + str(chell_number)
+
             employer = str(self.ws[employer].value).split()
 
             # Если ник есть в таблице, используем его
